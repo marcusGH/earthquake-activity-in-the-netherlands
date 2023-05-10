@@ -10,7 +10,7 @@ root_dir <- find_root(has_file("README.md"))
 tib <- read_csv(here(root_dir, "data", "raw",
                    paste0(date_str, "_induced-earthquakes.csv")))
 
-hist(tib$mag)
+hist(tib$mag, breaks = seq(-0.3, 4.0, by = 0.2))
 
 #' Returns the MLE estimate beta_hat of the exponential
 #' distribution, given data Xs in log scale
@@ -27,80 +27,94 @@ find_beta_hat <- function(log_xs, mc, bin_width) {
   return (log10(exp(1)) / (mean(log_xs) - (mc - bin_width / 2)))
 }
 
-goodness_of_fit <- function(log_xs, beta_hat, mc, bin_width = 0.1) {
-  # ensure the m_c is a multiple of the bin width and valid
-  if (abs(round(mc / bin_width) * bin_width - mc) >= 1E-5) {
-    stop(paste("The mc parameter", mc, "must be a multiple of the specified bin_width,", bin_width))
-  }
-  if (mc < min(log_xs) || mc >= max(log_xs)) {
-    stop("The mc parameter is not within the range of the provided data")
-  }
-  
-  n <- length(log_xs)
-  
-  # make the lower limit a multiple of the bin_width such that the
-  # bins are spaced in multiples of the bin_width, with one break at 0.0
-  # otherwise we might get errors if min(log_xs) and max(log_xs)
-  # are not both multiples of bin_width
-  breaks <- seq(floor(min(log_xs) / bin_width) * bin_width, max(log_xs), by = bin_width)
-  # count the number of observations that fall into each bin
-  histogram_obj <- hist(log_xs, breaks = breaks, plot = FALSE)
-  bin_counts <- histogram_obj$counts
-  
-  # the true cumultative bin counts, B_i in (Wiemer, S., Wyss, M., 2000)
-  counts_true = cumsum(bin_counts)
-  # the predicted cumulative counts in each bin, based on beta_hat and assuming
-  # log(Xs) ~ log(Exp(beta_hat)). This is S_i in (Wiemer, S., Wyss, M., 2000)
-  counts_pred = pexp(breaks[2:length(breaks)] - mc, rate = beta_hat) * n # removed 10^ at start
-  
+goodness_of_fit <- function(breaks, mags, mc) {
   # when evaluating the fit, we only make predictions on bins above mc
-  # as this data is assumed complete, so we can assume its exponentially distributed
-  mc_bin_index = which(abs(histogram_obj$breaks - mc) <= 1E-5)
+  # as this data is assumed complete. We assume one of the breaks
+  # is equal to the hypothesized M_c value, or we have to fail
+  mc_break_index = which(abs(breaks - mc) <= 1E-5)
+  if (length(mc_break_index) != 1) {
+    # TODO: test this
+    stop(paste("The mc parameter", mc, "must be in the list of bin breaks: ", paste(breaks, collapse = ", ")))
+  }
+  if (mc < min(mags) || mc >= max(mags)) {
+    stop(paste("The mc parameter", mc, " is not within the range of the provided data: (", min(mags), ", ", max(mags), ")"))
+  }
   
-  print("Temp")
-  print(counts_true)
-  print(counts_pred)
+  # count the number of observations that fall into each bin
+  histogram_obj <- hist(mags, breaks = breaks, plot = FALSE)
+  # only consider data past and including the hypothesized M_c value
+  bin_counts <- histogram_obj$counts[mc_break_index:(length(breaks) - 1)]
   
-  plot(mc_bin_index:length(bin_counts), counts_true[mc_bin_index:length(bin_counts)], color='red')
-  lines(mc:bin_index:length(bin_counts), counts_pred[mc_bin_index:length(bin_counts)], color='blue')
+  # Assuming mag ~ Exp(beta) gives log(N(m))=a+b*m, so fit linear model
+  # to decide a and b, where m is the magnitude, and N(m) is the number
+  # of events in the corresponding magnitude bin
+  mod <- lm(logN ~ 1 + m, data = data.frame(
+    # add one smoothing to avoid -Inf values
+    logN = log(bin_counts + 0.1),
+    # use the lower limit as the predictor
+    m = breaks[mc_break_index:(length(breaks) - 1)]
+  ))
+  a <- mod$coefficients[[1]]
+  b <- mod$coefficients[[2]]
   
-  # the right term in the goodness of fit formula (Wiemer, S., Wyss, M., 2000) 
-  R_value <- 100 * sum(abs(
-      counts_true[mc_bin_index:length(bin_counts)] -
+  # the true cumulative bin counts, B_i in (Wiemer, S., Wyss, M., 2000)
+  counts_true <- cumsum(bin_counts)
+  # the predicted cumulative counts in each bin, lower limit used because
+  # we also used the lower bin limit when fitting the linear model above
+  # (Note: This is S_i in (Wiemer, S., Wyss, M., 2000))
+  counts_pred <- cumsum(exp(predict(mod)))
+  
+  # print("Temp")
+  # print(counts_true)
+  # print(counts_pred)
+  # 
+  # plot(mc_bin_index:length(bin_counts), counts_true[mc_bin_index:length(bin_counts)], col='red', type='l')
+  # lines(mc_bin_index:length(bin_counts), counts_pred[mc_bin_index:length(bin_counts)], col='blue')
+  
+  # The goodness of fit residual, R(a, b, M_i) in (Wiemer, S., Wyss, M., 2000) 
+  R_value <- 100 - 100 * sum(abs(
+      counts_true[mc_bin_index:length(bin_counts)] - #counts_true[1:(mc_bin_index-1)] -
       counts_pred[mc_bin_index:length(bin_counts)]
     )) / sum(counts_true)
-  print(R_value)
+  # print(R_value)
   
-  return (R_value)
+  return (list(R_value=R_value, a=a, b=b))
 }
 
 # TODO: docs
-estimate_mc <- function(log_xs, bin_width = 0.1) {
-  # try all the mc values, starting from the lowest (but skipping last one due to possibly no data)
-  # we also need these values to be multiples of the bin width
-  mc_values <- seq(ceiling(min(log_xs) / bin_width) * bin_width, max(log_xs) - bin_width, by = bin_width)
+estimate_mc <- function(mags, bin_width = 0.1) {
+  # make the lower limit a multiple of the bin_width such that the
+  # bins are spaced in multiples of the bin_width, with one break at 0.0
+  # otherwise we might get errors if min(mags) and max(mags)
+  # are not both multiples of bin_width
+  breaks <- seq(floor(min(mags) / bin_width) * bin_width, max(mags), by = bin_width)
   
-  # store goodness of fits
+  # try the mc values aligned with the bin breaks, skipping the first
+  # candidate because we assume data is incomplete and skipping last
+  # due to it causing no data to be available for estimating a and b
+  mc_values <- breaks[2:(length(breaks)-1)]
+  # TODO: read from config Max mc value and override candidates if lower than max, and set it to 2.1 or something
+  
+  # store goodness of fits, along with the a and b estimates
   Rs <- rep(0, length(mc_values))
-  beta_hats <- rep(0, length(mc_values))
+  as <- rep(0, length(mc_values))
+  bs <- rep(0, length(mc_values))
   
   for (i in 1:length(mc_values)) {
-    # we assume the data is complete above the threshold, so use
-    # the relevant data to estimate beta hat
-    complete_data = log_xs[which(log_xs >= mc_values[i])]
-    beta_hat = find_beta_hat(complete_data, mc_values[i], bin_width)
-    print(beta_hat)
-    
     # find the goodness of fit
-    Rs[i] <- goodness_of_fit(log_xs, beta_hat, mc_values[i], bin_width)
-    print(Rs[i])
-    beta_hats[i] <- beta_hat
+    res <- goodness_of_fit(breaks, mags, mc_values[i])
+    Rs[i] <- res$R_value
+    as[i] <- res$a
+    bs[i] <- res$b
   }
   
-  return (tibble(mcs=mc_values, Rs=Rs, betas=beta_hats))
+  # TODO: config where can configure everything
+  # warning("The optimal M_c value does not give a model that can explain more than TODO% of the data variability. Using Mc=TODO, which only explains TODO% of the variability")
+  
+  return (tibble(mcs=mc_values, Rs=Rs, as=as, bs=bs))
 }
 
-res <-estimate_mc(tib$mag, bin_width = 0.3)
+res <-estimate_mc(tib$mag, bin_width = 0.1)
 best_mc <- res$mcs[which.max(res$Rs)]
 
 # TODO: make plot better by adding x label "Magnitude" etc. and legend
