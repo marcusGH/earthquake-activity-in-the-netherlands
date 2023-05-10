@@ -1,0 +1,38 @@
+\documentclass{article}
+% For reading variables from external file
+\usepackage{datatool}
+\DTLsetseparator{,}
+
+\begin{document}
+% Usage: \dat{variable-name}
+%   This prints the value of the variable to the document
+\DTLloaddb[noheader, keys={thekey,thevalue}]{dat}{monthly-report-summary-data.dat}
+\newcommand{\dat}[1]{\DTLfetch{dat}{thekey}{#1}{thevalue}}
+
+Test value of \dat{x1} and \dat{x2}.
+
+
+
+Estimate Mc using
+
+Minimum Magnitude of Completeness in Earthquake Catalogs:
+Examples from Alaska, the Western United States, and Japan
+by Stefan Wiemer and Max Wyss (see earthquakes in DOwnloads)
+
+https://agupubs.onlinelibrary.wiley.com/doi/full/10.26464/epp2018015?saml_referrer
+
+https://agupubs.onlinelibrary.wiley.com/doi/full/10.26464/epp2018015?saml_referrer
+
+Need to figure out how to perform the estimation again, because don't get working plots...
+
+summary here...
+
+https://pubs.geoscienceworld.org/ssa/bssa/article/90/4/859/120531/Minimum-Magnitude-of-Completeness-in-Earthquake
+
+Use this ^^ ?
+
+Downloads/CORSSA as well...
+
+When get back, just try to make the estimate as simple as possible i.e. just use idea of shifting data by Mc and then using exponential MLE or something and use a different metric to measure goodness of fit, for example binned MSE or something, averaged over number of "predictions" made instead of sum over true values...
+
+\end{document}

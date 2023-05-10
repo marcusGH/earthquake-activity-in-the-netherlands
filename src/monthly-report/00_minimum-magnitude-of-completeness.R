@@ -1,0 +1,125 @@
+library(here)
+library(rprojroot)
+library(tibble)
+library(tidyverse)
+library(ggplot2)
+
+date_str <- "2023-02-01"
+
+root_dir <- find_root(has_file("README.md"))
+tib <- read_csv(here(root_dir, "data", "raw",
+                   paste0(date_str, "_induced-earthquakes.csv")))
+
+hist(tib$mag)
+
+#' Returns the MLE estimate beta_hat of the exponential
+#' distribution, given data Xs in log scale
+#'
+#' @param log_xs data in log scale
+#'
+#' @return 
+#' @export
+#'
+#' @examples
+find_beta_hat <- function(log_xs, mc, bin_width) {
+  # Richter's magnitude scale is base10
+  # return (length(log_xs) / sum(log_xs))
+  return (log10(exp(1)) / (mean(log_xs) - (mc - bin_width / 2)))
+}
+
+goodness_of_fit <- function(log_xs, beta_hat, mc, bin_width = 0.1) {
+  # ensure the m_c is a multiple of the bin width and valid
+  if (abs(round(mc / bin_width) * bin_width - mc) >= 1E-5) {
+    stop(paste("The mc parameter", mc, "must be a multiple of the specified bin_width,", bin_width))
+  }
+  if (mc < min(log_xs) || mc >= max(log_xs)) {
+    stop("The mc parameter is not within the range of the provided data")
+  }
+  
+  n <- length(log_xs)
+  
+  # make the lower limit a multiple of the bin_width such that the
+  # bins are spaced in multiples of the bin_width, with one break at 0.0
+  # otherwise we might get errors if min(log_xs) and max(log_xs)
+  # are not both multiples of bin_width
+  breaks <- seq(floor(min(log_xs) / bin_width) * bin_width, max(log_xs), by = bin_width)
+  # count the number of observations that fall into each bin
+  histogram_obj <- hist(log_xs, breaks = breaks, plot = FALSE)
+  bin_counts <- histogram_obj$counts
+  
+  # the true cumultative bin counts, B_i in (Wiemer, S., Wyss, M., 2000)
+  counts_true = cumsum(bin_counts)
+  # the predicted cumulative counts in each bin, based on beta_hat and assuming
+  # log(Xs) ~ log(Exp(beta_hat)). This is S_i in (Wiemer, S., Wyss, M., 2000)
+  counts_pred = pexp(breaks[2:length(breaks)] - mc, rate = beta_hat) * n # removed 10^ at start
+  
+  # when evaluating the fit, we only make predictions on bins above mc
+  # as this data is assumed complete, so we can assume its exponentially distributed
+  mc_bin_index = which(abs(histogram_obj$breaks - mc) <= 1E-5)
+  
+  print("Temp")
+  print(counts_true)
+  print(counts_pred)
+  
+  plot(mc_bin_index:length(bin_counts), counts_true[mc_bin_index:length(bin_counts)], color='red')
+  lines(mc:bin_index:length(bin_counts), counts_pred[mc_bin_index:length(bin_counts)], color='blue')
+  
+  # the right term in the goodness of fit formula (Wiemer, S., Wyss, M., 2000) 
+  R_value <- 100 * sum(abs(
+      counts_true[mc_bin_index:length(bin_counts)] -
+      counts_pred[mc_bin_index:length(bin_counts)]
+    )) / sum(counts_true)
+  print(R_value)
+  
+  return (R_value)
+}
+
+# TODO: docs
+estimate_mc <- function(log_xs, bin_width = 0.1) {
+  # try all the mc values, starting from the lowest (but skipping last one due to possibly no data)
+  # we also need these values to be multiples of the bin width
+  mc_values <- seq(ceiling(min(log_xs) / bin_width) * bin_width, max(log_xs) - bin_width, by = bin_width)
+  
+  # store goodness of fits
+  Rs <- rep(0, length(mc_values))
+  beta_hats <- rep(0, length(mc_values))
+  
+  for (i in 1:length(mc_values)) {
+    # we assume the data is complete above the threshold, so use
+    # the relevant data to estimate beta hat
+    complete_data = log_xs[which(log_xs >= mc_values[i])]
+    beta_hat = find_beta_hat(complete_data, mc_values[i], bin_width)
+    print(beta_hat)
+    
+    # find the goodness of fit
+    Rs[i] <- goodness_of_fit(log_xs, beta_hat, mc_values[i], bin_width)
+    print(Rs[i])
+    beta_hats[i] <- beta_hat
+  }
+  
+  return (tibble(mcs=mc_values, Rs=Rs, betas=beta_hats))
+}
+
+res <-estimate_mc(tib$mag, bin_width = 0.3)
+best_mc <- res$mcs[which.max(res$Rs)]
+
+# TODO: make plot better by adding x label "Magnitude" etc. and legend
+ggplot(res, aes(mcs, 100-Rs)) +
+  geom_line() +
+  geom_point(shape=17, size=5) +
+  geom_vline(xintercept=best_mc, linetype="dashed", 
+            color = "red", linewidth=1) +
+  scale_y_continuous("Residual in %", sec.axis = sec_axis(~ (100 - .), name = "Goodness of fit"))
+
+# (100 - goodness) is the R-values, the sum thing, in the paper plot figure 2, left axis is residuals % (i.e. what's left)
+# right axis, but flipped because goodness = 100 - R-values is good, so actually take minimum in the plot!
+
+beta_hat <- res$betas[which.max(res$Rs)]
+
+line_scaling <- length(tib$mag[which(tib$mag>=best_mc)])
+
+ggplot(tib, aes(mag)) +
+  geom_histogram(binwidth=.1) +
+  geom_line(data=data.frame(xs=seq(best_mc, max(tib$mag), by=0.001)), aes(xs, line_scaling * dexp(xs, rate = beta_hat))) +
+  geom_vline(xintercept=best_mc, linetype="dashed",  color = "red", linewidth=1)
+
