@@ -1,0 +1,28 @@
+# Configuration file
+---
+####################################
+# Configuration for monthly report #
+####################################
+
+# The date of the most recent data
+date: 2023-02-01
+# The csv files should be named using convention YYYY-MM-DD<date-suffic>.csv
+data_suffix: _induced-earthquakes
+# the value to add to the earthquake frequencies before taking logs in M_c estimation
+log_frequency_smoothing_parameter: 0.1
+# width of magnitude bins used during M_c estimation
+magnitude_bin_width: 0.1
+# range of M_c values to consider
+min_mc: -1.0
+max_mc: 2.0
+# required explained variance, in percent
+explained_variance_min: 90
+# path to csv file where numerical summaries are stored
+report_summary_filename: report-summary-data.csv
+
+####################################################
+# Configuration for style guide supplement on MCMC #
+####################################################
+
+# End configuration
+...
