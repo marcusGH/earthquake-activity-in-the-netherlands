@@ -3,6 +3,8 @@
 \usepackage{caption} 
 \usepackage{subcaption} 
 \usepackage{datatool}
+\usepackage{cleveref} 
+\usepackage{amsmath} 
 \usepackage{graphicx}
 \usepackage{parskip} 
 \usepackage[margin=2cm]{geometry} 
@@ -19,8 +21,32 @@
 
 Test value of \dat{x1} and \dat{x2}.
 
-We get a $M_c$ estimate of \dat{mc}.
 
+Magnitude $m$ of a given earthquake exponential with parameter $\beta$, then the frequencies of earthquakes of that magnitude will
+be proportional to the exponential pdf:
+\begin{equation}
+    N(m) \propto \beta e^{-\beta m}
+\end{equation}
+Follows
+\begin{equation}
+    \log N(m) = \underbrace{\alpha\beta}_{a}-\underbrace{\beta}_b\cdot m
+\end{equation}
+Get the linear model $\log N(m)=a-bm$
+
+TODO: cite Wiemer, Wyss on R-value
+Also explain the binning (and mention binwidth with dat)
+
+\begin{equation}
+    R(a,b,M_i)=100 - 100 \left( \frac{\sum_{M_i}^{M_{max}} |B_i - S_i|}{\sum_{M_i}^{M_{max}} B_i}  \right)
+\end{equation}
+
+
+We get a $M_c$ estimate of \dat{mc}. See and explain \cref{fig:goodness}. Used TODO: dat 90\% thing
+
+Additionally, model fit with $\hat{a}=\dat{a_hat}$ and $\hat{b}=\dat{b_hat}$
+
+In \cref{fig:hist}, plotted magnitudes above $M_c=\dat{mc}$, and add predictions in red line.
+See that an exponential model fits the data quite well
 
 
 \begin{figure}[htp]
@@ -41,6 +67,13 @@ We get a $M_c$ estimate of \dat{mc}.
 \caption{TODO}
 \label{fig:figs1}
 \end{figure}
+
+\newpage
+
+% Read month from data and change dynamically
+\section*{Earthquake activity in TODO month}%
+\label{sec:Earthquake activity in TODO month}
+
 
 
 

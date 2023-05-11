@@ -58,7 +58,7 @@ estimate_mc <- function(mags) {
   # otherwise we might get errors if min(mags) and max(mags)
   # are not both multiples of bin_width
   breaks <- seq(floor(min(mags) / config$magnitude_bin_width) * config$magnitude_bin_width,
-                max(mags), by = config$magnitude_bin_width)
+                max(mags) + config$magnitude_bin_width, by = config$magnitude_bin_width)
   
   # try the mc values aligned with the bin breaks, skipping the first
   # candidate because we assume data is incomplete and skipping last
@@ -83,13 +83,13 @@ estimate_mc <- function(mags) {
   
   # pick the first Mc which explains above 90% of the data,
   # or whatever value is configured
-  best_mc_index <- which(Rs >= config$explained_variance_min)[1]
-  if (is.na(best_mc_index)) {
+  mc_hat_index <- which(Rs >= config$explained_variance_min)[1]
+  if (is.na(mc_hat_index)) {
     warning(paste0("Failed to find an Mc value producing a fit that explains above ",
             config$explained_variance_min,
             "% of the data. Using the Mc value that gives the highest goodness of fit instead"))
-    best_mc_index <- which.max(Rs)
+    mc_hat_index <- which.max(Rs)
   }
   
-  return (list(mcs=mc_values, Rs=Rs, as=as, bs=bs, best_mc_index=best_mc_index))
+  return (list(mcs=mc_values, Rs=Rs, as=as, bs=bs, mc_hat_index=mc_hat_index))
 }

@@ -4,6 +4,9 @@ library(tibble)
 library(tidyverse)
 library(ggplot2)
 library(yaml)
+library(dplyr)
+library(magrittr)
+library(lubridate)
 
 proj_root <- find_root(has_file("README.md"))
 config <- yaml.load_file(here(proj_root, "config.yaml"))
@@ -14,17 +17,19 @@ source(here(proj_root, "src", "helper-functions", "report-data-util.R"))
 
 # read in the newest data as a tibble
 data_filename <- paste0(config$date, config$data_suffix, ".csv")
-earthquake_data <- read_csv(here(proj_root, "data", "raw", data_filename))
+# only use the last 12 months
+earthquake_data <- read_csv(here(proj_root, "data", "raw", data_filename)) %>%
+  filter(as.Date(date) >= as.Date(config$date) %m-% months(12))
 
 mc_estimate <- estimate_mc(earthquake_data$mag)
-best_mc <- mc_estimate$mcs[mc_estimate$best_mc_index]
-best_a <- mc_estimate$as[mc_estimate$best_mc_index]
-best_b <- mc_estimate$bs[mc_estimate$best_mc_index]
+mc_hat <- mc_estimate$mcs[mc_estimate$mc_hat_index]
+a_hat <- mc_estimate$as[mc_estimate$mc_hat_index]
+b_hat <- mc_estimate$bs[mc_estimate$mc_hat_index]
 
 ggplot(data.frame(mc_estimate), aes(mcs, 100-Rs)) +
   geom_line() +
   geom_point(shape=17, size=3) +
-  geom_vline(xintercept=best_mc, linetype="dashed", 
+  geom_vline(xintercept=mc_hat, linetype="dashed", 
             color = "red", linewidth=1) +
   scale_y_continuous("Residual in %", sec.axis = sec_axis(~ (100 - .), name = "Goodness of fit"), limits = c(0, NA)) +
   xlab(expression("Minimum magnitude of completeness, M"["c"])) +
@@ -42,11 +47,11 @@ ggsave(here(proj_root, "outputs", "figures", "goodness-of-fit.pdf"),
 # and also exporting all the config to file so can be read in by latex, e.g. M_c etc.
 
 # histogram data
-mags_above_mc <- earthquake_data$mag[which(earthquake_data$mag >= best_mc)]
-mag_breaks <- seq(best_mc, max(mags_above_mc), by = config$magnitude_bin_width)
+mags_above_mc <- earthquake_data$mag[which(earthquake_data$mag >= mc_hat)]
+mag_breaks <- seq(mc_hat, max(mags_above_mc), by = config$magnitude_bin_width)
 # pdf overlay data
-xs <- seq(best_mc, max(mags_above_mc), by=0.01)
-ys <- exp(best_a + best_b * xs)
+xs <- seq(mc_hat, max(mags_above_mc), by=0.01)
+ys <- exp(a_hat + b_hat * xs)
 
 # TODO: add legends ...
 ggplot(data.frame(mags_above_mc), aes(mags_above_mc)) +
@@ -70,4 +75,7 @@ ggplot(data.frame(mags_above_mc), aes(mags_above_mc)) +
 ggsave(here(proj_root, "outputs", "figures", "earthquake-histogram.pdf"),
        width=9, height=27/3, units="cm")
         
-set_data_variable("mc", best_mc)
+# numerical summaries we might use in the monthyl report
+set_data_variable("mc", mc_hat)
+set_data_variable("a_hat", round(a_hat, 4))
+set_data_variable("b_hat", round(b_hat, 4))
