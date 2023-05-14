@@ -1,6 +1,17 @@
 "key","value"
-"x1",10
-"x2",20
-"mc",0.2
-"a_hat",1.8022
-"b_hat",-1.2033
+"mc","0.4"
+"a_hat","2.0268"
+"b_hat","-1.2386"
+"num_complete_observations","45"
+"explained_variance","90"
+"bin_width","0.1"
+"date_start","February 01, 2022"
+"date_now","February 01, 2023"
+"month_now","January 2023"
+"count_last_month","2"
+"count_11_month","43"
+"max_last_month","1.8"
+"max_11_month","3.1"
+"mean_last_month","1.55"
+"mean_11_month","1.17"
+"avg_count_11_month","3.91"

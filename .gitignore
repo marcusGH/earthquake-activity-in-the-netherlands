@@ -2,4 +2,5 @@
 monthly-report/build/*
 monthly-report/build/
 .Rhistory
+*.swp
 

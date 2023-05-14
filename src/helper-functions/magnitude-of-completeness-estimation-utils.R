@@ -9,7 +9,7 @@ goodness_of_fit <- function(breaks, mags, mc) {
   # when evaluating the fit, we only make predictions on bins above mc
   # as this data is assumed complete. We assume one of the breaks
   # is equal to the hypothesized M_c value, or we have to fail
-  mc_break_index = which(abs(breaks - mc) <= 1E-5)
+  mc_break_index = which(abs(breaks - mc) <= 1E-3)
   if (length(mc_break_index) != 1) {
     stop(paste("The mc parameter", mc, "must be in the list of bin breaks: ", paste(breaks, collapse = ", ")))
   }
@@ -73,6 +73,11 @@ estimate_mc <- function(mags) {
   as <- rep(0, length(mc_values))
   bs <- rep(0, length(mc_values))
   
+  # We might get numerical errors during the binning if the breaks
+  # are exactly equal to the magnitudes, so shift all the breaks
+  # except the last one slightly to the left
+  breaks[1:length(breaks)-1] <- breaks[1:length(breaks)-1] - 1E-4
+  
   for (i in 1:length(mc_values)) {
     # find the goodness of fit
     res <- goodness_of_fit(breaks, mags, mc_values[i])
@@ -91,5 +96,5 @@ estimate_mc <- function(mags) {
     mc_hat_index <- which.max(Rs)
   }
   
-  return (list(mcs=mc_values, Rs=Rs, as=as, bs=bs, mc_hat_index=mc_hat_index))
+  return (list(mcs=mc_values, Rs=Rs, as=as, bs=bs, mc_hat_index=mc_hat_index, breaks=breaks))
 }

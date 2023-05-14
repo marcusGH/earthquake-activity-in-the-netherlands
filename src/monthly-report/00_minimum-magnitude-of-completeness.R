@@ -32,7 +32,7 @@ ggplot(data.frame(mc_estimate), aes(mcs, 100-Rs)) +
   geom_vline(xintercept=mc_hat, linetype="dashed", 
             color = "red", linewidth=1) +
   scale_y_continuous("Residual in %", sec.axis = sec_axis(~ (100 - .), name = "Goodness of fit"), limits = c(0, NA)) +
-  xlab(expression("Minimum magnitude of completeness, M"["c"])) +
+  xlab(expression("Minimum magnitude of completeness, m"["c"])) +
   theme_bw() +
   theme(axis.line = element_line(colour = "black"),
         # panel.grid.major = element_blank(),
@@ -40,15 +40,16 @@ ggplot(data.frame(mc_estimate), aes(mcs, 100-Rs)) +
         # panel.border = element_blank(),
         panel.background = element_blank())
 ggsave(here(proj_root, "outputs", "figures", "goodness-of-fit.pdf"),
-       width=9, height=27/3, units="cm")
+       width=9, height=27/5, units="cm")
 
 # TODO: now make the below plot verifying that records appear complete
 # After doing this, start wriiting page one of the report, citing papers etc.
 # and also exporting all the config to file so can be read in by latex, e.g. M_c etc.
 
-# histogram data
-mags_above_mc <- earthquake_data$mag[which(earthquake_data$mag >= mc_hat)]
-mag_breaks <- seq(mc_hat, max(mags_above_mc), by = config$magnitude_bin_width)
+# in case the magnitude is equal, accept some noise to avoid numerical errors
+mags_above_mc <- earthquake_data$mag[which(earthquake_data$mag >= mc_hat - 1E-4)]
+mag_breaks <- mc_estimate$breaks[(mc_estimate$mc_hat_index+1):length(mc_estimate$breaks)]
+
 # pdf overlay data
 xs <- seq(mc_hat, max(mags_above_mc), by=0.01)
 ys <- exp(a_hat + b_hat * xs)
@@ -73,9 +74,16 @@ ggplot(data.frame(mags_above_mc), aes(mags_above_mc)) +
         panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5))
 ggsave(here(proj_root, "outputs", "figures", "earthquake-histogram.pdf"),
-       width=9, height=27/3, units="cm")
+       width=9, height=27/5, units="cm")
         
-# numerical summaries we might use in the monthyl report
+# variable data we use in the monthly report. Save these to external
+# file so that they can be read by LaTeX using the datatool package
 set_data_variable("mc", mc_hat)
 set_data_variable("a_hat", round(a_hat, 4))
 set_data_variable("b_hat", round(b_hat, 4))
+set_data_variable("num_complete_observations", length(mags_above_mc))
+set_data_variable("explained_variance", config$explained_variance_min)
+set_data_variable("bin_width", config$magnitude_bin_width)
+sf <- stamp("January 01, 1970")
+set_data_variable("date_start", sf(as.Date(config$date) %m-% months(12)))
+set_data_variable("date_now", sf(as.Date(config$date)))
