@@ -71,7 +71,7 @@ st_join(nl_geo_data, earthquake_data) %>%
   scale_size_identity() +
   scale_alpha_identity()
 ggsave(here(proj_root, "outputs", "figures", "earthquake-map.pdf"),
-       width=18, height=8.8, units="cm")
+       width=18, height=8.9, units="cm")
 
 # determine how many earthquakes where in the last month compared
 # to the 11 preceding months. Sorting by is_last_month makes

@@ -1,5 +1,57 @@
 \documentclass[12pt]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{datatool}
+\usepackage{cleveref}
+\usepackage{amsmath}
+\usepackage{amssymb}
 
 \begin{document}
-    
+\pagenumbering{gobble}
+% Usage: \dat{variable-name}
+%   This prints the value of the variable to the document
+\DTLloaddb[noheader, keys={thekey,thevalue}]{dat}{../../data/derived/report-summary-data.csv}
+\newcommand{\dat}[1]{\DTLfetch{dat}{thekey}{#1}{thevalue}}
+
+\section*{Markov chain Monte Carlo storage guide}%
+
+When using Markov chain Monte Carlo (MCMC) methods to sample $\theta^{(1)},\dots, \theta^{(m)} \in \mathbb{R}^p$, sequentially, from the joint posterior
+$\pi(\theta)$, the samples should be stores in pre-allocated storage.
+Relevant options are using either R data frames or R matrices, and either storing the samples row-wise or column-wise.
+If storing the samples column-wise, the storage should be transposed after being filled, and if using matrices, they should be
+converted back to data frames at the end.
+The use of R data frames for this task is heavily discouraged, as the execution time scales poorly with the number of samples, $m$,
+as evident from \cref{fig:time}.
+
+\begin{figure}[htp]
+\begin{center}
+    \includegraphics[scale=1.0]{../../outputs/figures/mcmc-execution-times.pdf}
+\end{center}
+\caption{%
+    For each of the four storage allocation strategies described above, the matrix or dataframe was filled sequentially using a
+    dummy MCMC sampler. Both the storage initialisation, the sampling and the transformation and conversion at the end, if applicable,
+    was timed. This was done for $m$-values logarithmically spaced between 1 and $m_{max}=\protect\dat{max_m}$. For all the simulations,
+    the dimensions of the posterior distribution was set to
+    $p=\protect\dat{num_model_parameters}$.
+    The confidence intervals are asymptotic normal 95\% intervals, based on repeating the simulation
+    \protect\dat{num_simulation_repeats} times.
+}
+\label{fig:time}
+\end{figure}
+
+Instead, the storage should be pre-allocated using either a $p \times m$ or a $m \times p$ R matrix, and should then be filled
+column-wise or row-wise, respectively. The matrices should then be converted to a data frame after being filled, and if filling column-wise, the matrix should be transposed before converting to a data frame.
+There is no statistically significant difference between the two matrix approaches as their execution times for $m=\dat{max_m}$ samples
+is very similar:
+\begin{center}
+    \begin{tabular}{c|c}
+        \textbf{Storage strategy} & \textbf{95\% asymptotic normal confidence interval for execution time} \\
+        \hline
+        Matrix row-wise & $\dat{mat_row_avg}\pm\dat{mat_row_95}$ seconds \\
+        Matrix column-wise & $\dat{mat_col_avg}\pm\dat{mat_col_95}$ seconds
+    \end{tabular}
+\end{center}
+
+Therefore, either of the two matrix option are acceptable.
 \end{document}

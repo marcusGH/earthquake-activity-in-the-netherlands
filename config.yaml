@@ -24,5 +24,12 @@ report_summary_filename: report-summary-data.csv
 # Configuration for style guide supplement on MCMC #
 ####################################################
 
+# value of p to use in the simulation study
+num_model_parameters: 10
+# m-values logarithmically-spaced between 1 and this value will be tested
+max_num_samples: 1E4
+# number of times to repeat each simulation to get confidence intervals
+num_repeated_simulations: 8
+
 # End configuration
 ...

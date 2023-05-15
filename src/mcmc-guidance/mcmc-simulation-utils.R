@@ -42,44 +42,29 @@ dummy_mcmc_sampler <- function(prev_state, p) {
 #' @export
 #'
 #' @examples
-simulate_mcmc_sampling <- function(mcmc_sampler, storage,
-                                   fill_rowwise, ...) {
-  
-  # infer number of samples, m, and posterior dimension, p, from storage object
-  if (fill_rowwise) {
-    m <- nrow(storage)
-    p <- ncol(storage)
-  } else {
-    # we are filling column-wise, so p = number of rows
-    m <- ncol(storage)
-    p <- nrow(storage)
-  }
+simulate_mcmc_sampling <- function(mcmc_sampler, allocation_strategy, m, p, ...) {
   
   prev_mcmc_state <- NULL
   
   tic(quiet = TRUE)
+  
+  storage <- allocation_strategy$storage_func(m, p)
   for (i in 1:m) {
-    # TODO: maybe remove p from here and pass as ellipsis instead for dummy sampler?
     res <- mcmc_sampler(prev_mcmc_state, p, ...)
     prev_mcmc_state <- res$state
-    
-    if (fill_rowwise) {
+
+    if (allocation_strategy$fill_rowwise) {
       storage[i,] <- res$sample
     } else {
       storage[,i] <- res$sample
     }
   }
   # transpose the whole thing if filling column-wise
-  if (!fill_rowwise) {
-    storage <- t(storage)
-  }
+  # and convert to dataframe if using matrices
+  storage <- allocation_strategy$transform(storage)
   
   timer <- toc(quiet = TRUE)
   time_elapsed <- timer$toc - timer$tic
   
   return (list(time_elapsed = time_elapsed, samples = storage))
 }
-
-storage <- data.frame(matrix(NA, nrow = 30, ncol = 2))
-
-simulate_mcmc_sampling(dummy_mcmc_sampler, storage, fill_rowwise = TRUE)$time_elapsed
