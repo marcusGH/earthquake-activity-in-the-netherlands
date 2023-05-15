@@ -11,14 +11,18 @@ proj_root <- find_root(has_file("README.md"))
 config <- yaml.load_file(here(proj_root, "config.yaml"))
 
 # load the helper functions required for estimating M_c
-source(here(proj_root, "src", "mcmc-guidance", "mcmc-simulation-utils.R"))
-source(here(proj_root, "src", "helper-functions", "report-data-util.R"))
+source(here(proj_root, "src", "helper-functions", "mcmc-simulation-utils.R"))
+source(here(proj_root, "src", "helper-functions", "report-data-utils.R"))
 
 p <- as.integer(config$num_model_parameters)
 max_num_samples <- as.integer(config$max_num_samples)
 # to get an idea of how performance scales, simulate the sampling for
 # logarithmicaly spaced m-values going up to specified number of samples
 ms <- as.integer(10 ^ seq(0, log10(max_num_samples), by = .25))
+# we might get multiple 1s
+if (ms[2] == ms[1]) {
+  ms[2] <- ms[2] + 1
+}
 # number of times to repeat each combination of storage allocation, m, and p
 # in order to get a confidence interval for the values
 num_repeats <- as.integer(config$num_repeated_simulations)

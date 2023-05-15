@@ -16,7 +16,7 @@ config <- yaml.load_file(here(proj_root, "config.yaml"))
 
 # load the helper functions required for estimating M_c
 source(here(proj_root, "src", "helper-functions", "magnitude-of-completeness-estimation-utils.R"))
-source(here(proj_root, "src", "helper-functions", "report-data-util.R"))
+source(here(proj_root, "src", "helper-functions", "report-data-utils.R"))
 
 # read in the newest data as a tibble
 data_filename <- paste0(config$date, config$data_suffix, ".csv")

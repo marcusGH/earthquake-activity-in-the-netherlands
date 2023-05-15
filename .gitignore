@@ -3,4 +3,5 @@ monthly-report/build/*
 monthly-report/build/
 .Rhistory
 *.swp
+Rplots.pdf
 

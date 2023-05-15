@@ -11,7 +11,7 @@
 \pagenumbering{gobble}
 % Usage: \dat{variable-name}
 %   This prints the value of the variable to the document
-\DTLloaddb[noheader, keys={thekey,thevalue}]{dat}{../../data/derived/report-summary-data.csv}
+\DTLloaddb[noheader, keys={thekey,thevalue}]{dat}{data/derived/report-summary-data.csv}
 \newcommand{\dat}[1]{\DTLfetch{dat}{thekey}{#1}{thevalue}}
 
 \section*{Markov chain Monte Carlo storage guide}%
@@ -26,7 +26,7 @@ as evident from \cref{fig:time}.
 
 \begin{figure}[htp]
 \begin{center}
-    \includegraphics[scale=1.0]{../../outputs/figures/mcmc-execution-times.pdf}
+    \includegraphics[scale=1.0]{outputs/figures/mcmc-execution-times.pdf}
 \end{center}
 \caption{%
     For each of the four storage allocation strategies described above, the matrix or dataframe was filled sequentially using a

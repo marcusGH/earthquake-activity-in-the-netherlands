@@ -13,12 +13,18 @@ config <- yaml.load_file(here(proj_root, "config.yaml"))
 
 # load the helper functions required for estimating M_c
 source(here(proj_root, "src", "helper-functions", "magnitude-of-completeness-estimation-utils.R"))
-source(here(proj_root, "src", "helper-functions", "report-data-util.R"))
+source(here(proj_root, "src", "helper-functions", "report-data-utils.R"))
 
 # read in the newest data as a tibble
 data_filename <- paste0(config$date, config$data_suffix, ".csv")
+data_path <- here(proj_root, "data", "raw", data_filename)
+if (!file.exists(data_path)) {
+  stop(paste0("The earthquake data file was not found: ", data_path,
+              ". Make sure the data in config.yaml is configured correctly"))
+}
+
 # only use the last 12 months
-earthquake_data <- read_csv(here(proj_root, "data", "raw", data_filename)) %>%
+earthquake_data <- read_csv(data_path) %>%
   filter(as.Date(date) >= as.Date(config$date) %m-% months(12))
 
 mc_estimate <- estimate_mc(earthquake_data$mag)
@@ -26,7 +32,7 @@ mc_hat <- mc_estimate$mcs[mc_estimate$mc_hat_index]
 a_hat <- mc_estimate$as[mc_estimate$mc_hat_index]
 b_hat <- mc_estimate$bs[mc_estimate$mc_hat_index]
 
-ggplot(data.frame(mc_estimate), aes(mcs, 100-Rs)) +
+ggplot(data.frame(mcs = mc_estimate$mcs, Rs = mc_estimate$Rs), aes(mcs, 100-Rs)) +
   geom_line() +
   geom_point(shape=17, size=3) +
   geom_vline(xintercept=mc_hat, linetype="dashed", 
