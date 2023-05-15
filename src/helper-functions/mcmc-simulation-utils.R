@@ -1,5 +1,14 @@
 library(tictoc)
 
+#' Title
+#'
+#' @param prev_state 
+#' @param p 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 dummy_mcmc_sampler <- function(prev_state, p) {
   # ignore state
   next_state <- prev_state
@@ -10,16 +19,20 @@ dummy_mcmc_sampler <- function(prev_state, p) {
   return (list(state = next_state, sample = sample))
 }
 
-# ellipsis arguments are passed on to the sampler, e.g. used for data
+#' Measures the execution time required to run the provided MCMC
+#' sampler to produce `m` samples of length `p`, where the storage
+#' is pre-allocated using the provided `allocation_strategy`
 #'
 #' @param mcmc_sampler A function taking two arguments, some
 #' arbitrary state, and an integer p specifying the dimension of
 #' the sample. The function should then return a list where key
-#' $sample maps to a p-length numeric vector and key $state maps
+#' `sample` maps to a p-length numeric vector and key `state` maps
 #' to some arbitrary object that the will be fed back to the sampler
-#' the next time it is called. The first time the sampler is called,
-#' this state will be NULL. The ellipsis arguments are also passed
-#' on to the mcmc_sampler function. In summary, the sampler should be able to
+#' the next time it is called. If for example using a Metropolis-Hastings
+#' sampler, this state could be the previous sample. The first time
+#' the sampler is called, this state will be NULL. The ellipsis
+#' arguments are also passed on to the mcmc_sampler function.
+#' In summary, the sampler should be able to
 #' comply with the following sampling procedure:
 #' 
 #' state <- NULL
@@ -29,19 +42,19 @@ dummy_mcmc_sampler <- function(prev_state, p) {
 #'   sample <- res$sample
 #' }
 #' 
-#' @param storage either a m x p or p x m sized object that numeric
-#' values can be assigned to. The parameters m and p will be infered
-#' from object storage and from whether it is filled row-wise or
-#' column-wise. Values of dimension p are added 1-by-1 m times during
-#' simulation
-#' @param fill_rowwise boolean indicating whether the storage
-#' should be filled row-by-row or column-by-column
-#' @param ... optional arguments passed along to the mcmc sampler
+#' @param allocation_strategy a list containing the following three items:
+#' * `fill_rowwise` a boolean value indicating how the storage is filled
+#' * `storage_func` a function taking two integers, m, and p, and returning
+#'   some storage object of size \eqn{m \times p} if `fill_rowwise` is true,
+#'   and of size \eqn{p \times m} otherwise
+#' * `transform` a function that takes a single argument, and will be applied to
+#'   the storage object after it has been filled with samples. It should returned
+#'   a transformed version of the provided storage object, for instance transposed
+#' @param m the number of samples to generate
+#' @param p the dimension of the samples
+#' @param ... optional arguments passed along to the `mcmc_sampler` when it is called
 #'
-#' @return a list with time_elapsed and samples objects
-#' @export
-#'
-#' @examples
+#' @return a list with time_elapsed and transformed and filled samples storage object
 simulate_mcmc_sampling <- function(mcmc_sampler, allocation_strategy, m, p, ...) {
   
   prev_mcmc_state <- NULL
@@ -60,7 +73,7 @@ simulate_mcmc_sampling <- function(mcmc_sampler, allocation_strategy, m, p, ...)
     }
   }
   # transpose the whole thing if filling column-wise
-  # and convert to dataframe if using matrices
+  # and convert to data frame if using matrices
   storage <- allocation_strategy$transform(storage)
   
   timer <- toc(quiet = TRUE)

@@ -1,8 +1,8 @@
 # Configuration file
 ---
-####################################
-# Configuration for monthly report #
-####################################
+#####################################
+# Configuration for monthly summary #
+#####################################
 
 # The date of the most recent data
 date: 2023-02-01
@@ -20,9 +20,9 @@ explained_variance_min: 90
 # path to csv file where numerical summaries are stored
 report_summary_filename: report-summary-data.csv
 
-####################################################
-# Configuration for style guide supplement on MCMC #
-####################################################
+########################################
+# Configuration for MCMC storage guide #
+########################################
 
 # value of p to use in the simulation study
 num_model_parameters: 10

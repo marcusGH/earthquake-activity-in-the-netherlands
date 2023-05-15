@@ -2,13 +2,45 @@ library(yaml)
 library(here)
 library(rprojroot)
 
+#' Fits an exponential model to the provided magnitude data above
+#' mc, and returns the fit along with a metric for its goodness of fit
+#' 
+#' The metric for the goodness of fit is computed through the following
+#' method, first proposed by (Wiemer and Wyss) in 2000. 
+#' The magnitudes are first binned based on the provided `breaks`, where
+#' \eqn{N(m)} denotes the number of earthquakes in the bin with a lower value
+#' of \eqn{m}. The following linear model is then fitted, only using magnitudes
+#' above specified `mc`:
+#' \deqn{\log N(m) = a-b\cdot m},
+#' where \eqn{a} and \eqn{b} are unknown parameters. The parameters are
+#' used to predict the earthquake frequencies for all the bins above mc.
+#' The cumulative count for these predictions, denotes \eqn{S_i},
+#' are then compared to the cumulative true counts, \eqn{B_i}, of
+#' \eqn{N(m)} for \eqn{m \geq m_c}, and the sum of the absolute differences
+#' are normalized by the sum of the true counts. This value then becomes
+#' the residual. The goodness of fit is then 1 minus the residual, and converted
+#' to percentages. All in all, we have that the goodness of fit is given by
+#' \deqn{100-100\frac{ \sum_{M_i=M_j}^{M_{max}} |B_i - S_i| }{ \sum_{M_i=M_j}^{M_{max}} B_i }
+#' 
+#' References:
+#'   Stefan Wiemer and Max Wyss. Minimum magnitude of completeness in earthquake catalogs: Examples from
+#'   alaska, the western united states, and japan. Bulletin of the Seismological Society of America, 90:859–869,
+#'   09 2000. doi: 10.1785/0119990114.
+#' 
+#'
+#' @param breaks a vector of breaks to use when binning the data. Should be evenly seperated
+#' @param mags a vector of magnitude values
+#' @param mc the candidate mc for which to compute goodness of fit. Should be numerically close to one of the breaks
+#'
+#' @return a list of the R_value, measuring goodness of fit,
+#' a and b, the parameters of the fitted model
 goodness_of_fit <- function(breaks, mags, mc) {
   proj_root <- find_root(has_file("README.md"))
   config <- yaml.load_file(here(proj_root, "config.yaml"))
   
   # when evaluating the fit, we only make predictions on bins above mc
   # as this data is assumed complete. We assume one of the breaks
-  # is equal to the hypothesized M_c value, or we have to fail
+  # is equal or close to the hypothesized m_c value, or we have to fail
   mc_break_index = which(abs(breaks - mc) <= 1E-3)
   if (length(mc_break_index) != 1) {
     stop(paste("The mc parameter", mc, "must be in the list of bin breaks: ", paste(breaks, collapse = ", ")))
@@ -44,11 +76,33 @@ goodness_of_fit <- function(breaks, mags, mc) {
   # The goodness of fit residual, R(a, b, M_i) in (Wiemer, S., Wyss, M., 2000) 
   R_value <- 100 - 100 * sum(abs(
       counts_true - counts_pred
-    )) / sum(counts_true) #sum(histogram_obj$counts)
+    )) / sum(counts_true)
   
   return (list(R_value=R_value, a=a, b=b))
 }
 
+#' Finds the optimal c_c value based on provided magnitude data
+#' and configured parameters
+#' 
+#' Candidate values for the minimum magnitude of completeness, m_c,
+#' are set to be from an evenly spaced grid from min_mc to max_mc,
+#' which can be configured in config.yaml, with a spacing of the
+#' the configured bin width. The goodness of fit for all of these
+#' candidates are then computed using `goodness_of_fit`, and the lowest
+#' m_c value achieving a goodness above the configured `explained_variance_min`
+#' is used. If none such is found, the one giving the highest goodness of fit
+#' is used instead.
+#'
+#' @param mags a vector of magnitude levels
+#'
+#' @return a list with keys:
+#'         * mcs the candidate mc values considered
+#'         * Rs the goodness of fits for the different candidates
+#'         * as the a parameters in the exponential fit
+#'         * bs the b parameters in the exponential fit
+#'         * mc_hat_index the index into mcs, Rs, as and bs for which the
+#'                        chosen m_c value was selected
+#'         * breaks the bin-breaks used. These should also be used for plotting
 estimate_mc <- function(mags) {
   proj_root <- find_root(has_file("README.md"))
   config <- yaml.load_file(here(proj_root, "config.yaml"))

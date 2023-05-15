@@ -2,6 +2,18 @@ library(yaml)
 library(here)
 library(rprojroot)
 
+#' Writes specified key-value pair to external data file for use
+#' in latex documents through the datatool package
+#'
+#' The filename of the external data file is configured in the
+#' config with name `report_summary_filename`
+#'
+#' @param key a string key to identify the value
+#' @param value the value to associate with the key. Can be both
+#' numeric and character type
+#'
+#' @examples
+#' set_data_variable("pi", 3.14)
 set_data_variable <- function(key, value) {
   proj_root <- find_root(has_file("README.md"))
   config <- yaml.load_file(here(proj_root, "config.yaml"))
@@ -26,6 +38,17 @@ set_data_variable <- function(key, value) {
   write.csv(data, filename, row.names = FALSE)
 }
 
+#' Reads the value associated with specified key from the
+#' external data file, configured in the config file
+#'
+#' An error is thrown if the key does not exist.
+#'
+#' @param key the string key to look up
+#'
+#' @return the associated value
+#'
+#' @examples
+#' read_data_variable("pi")
 read_data_variable <- function(key) {
   proj_root <- find_root(has_file("README.md"))
   config <- yaml.load_file(here(proj_root, "config.yaml"))
