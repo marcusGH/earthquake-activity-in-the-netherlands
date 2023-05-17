@@ -49,7 +49,7 @@ Table of contents:
 Before attempting to reproduce the monthly summary and the MCMC storage guide, please make sure you have all the following on your system:
 
 * The R programming language
-* The `R` packages found in [`install_requirements.R`](install_requirements.R).
+* The `R` packages found in [`install-requirements.R`](install-requirements.R).
   You can either run this script on your system or install them manually.
 * The following LaTeX packages: `amsmath`, `amssymb`, `caption`, `cleveref`, `datatool`, `geometry`, `graphicx`, `natbib`, `parskip`, and `subcaption`.
 * If you want to compile the [`monthly-summary.tex`](reports/monthly-summary/monthly-summary.tex) or the [`mcmc-storage-guide.tex`](reports/mcmc-storage-guide/mcmc-storage-guide.tex) using the [`Makefile`](Makefile), you will also need the following:
@@ -77,7 +77,7 @@ Simply navigate to the root of the repository, and run `make monthly_summary`. T
 
 * Navigate to the project root directory
 * Run [`src/monthly-summary/00_minimum-magnitude-of-completeness.R`](src/monthly-summary/00_minimum-magnitude-of-completeness.R) to create the plots for the first page
-* Then run [`src/monthly-summary/01_earthquake-visualisations.R`](src/monthly-summary/00_earthquake-visualisations.R) to create the plots for the second page
+* Then run [`src/monthly-summary/01_earthquake-visualisations.R`](src/monthly-summary/01_earthquake-visualisations.R) to create the plots for the second page
 * Compile the LaTeX document [`reports/monthly-summary/monthly-summary.tex`](reports/monthly-summary/monthly-summary.tex)
 
 ## Producing the Markov chain Monte Carlo storage guide
