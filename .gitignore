@@ -4,5 +4,5 @@ monthly-report/build/
 .Rhistory
 *.swp
 Rplots.pdf
-data/derived/*.csv
+!data/derived/.gitignore
 
