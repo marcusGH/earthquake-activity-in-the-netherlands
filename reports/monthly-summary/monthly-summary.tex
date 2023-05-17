@@ -93,8 +93,8 @@ to the data above the selected value.}
 \begin{center}
     \includegraphics[scale=1]{outputs/figures/earthquake-map.pdf}
 \end{center}
-\caption{Map of Northern Netherland, overlayer with the epicentres of the earthquakes recorded in the past 12 months.
-The size of the circles correspond to the earthquakes' magnitude.}
+\caption{Map of Northern Netherland, overlayed with the epicentres of the earthquakes recorded in the past 12 months with
+    a magnitude above $m_c=\protect\dat{mc}$. The size of the circles correspond to the earthquakes' magnitude.}
 \label{fig:map}
 \end{figure}
 
@@ -103,48 +103,18 @@ The size of the circles correspond to the earthquakes' magnitude.}
     \includegraphics[scale=1]{outputs/figures/earthquake-hist.pdf}
 \end{center}
 \caption{Histogram of the magnitudes of the earthquakes recorded in the past 12 months.}
-\label{fig:hist}
+\label{fig:hist2}
 \end{figure}
 
 In \dat{month_now}, there were \dat{count_last_month} earthquakes recorded above magnitude
 $m_c=\dat{mc}$. In the 11 preceding months, there were \dat{count_11_month}, with an average monthly
 count of \dat{avg_count_11_month}, meaning there was less earthquakes than expected last month.
 The largest magnitude was \dat{max_last_month}, compared to a magnitude \dat{max_11_month} earthquake that
-happened in the 11 months prior. The distribution of the earthquakes is shown in \cref{fig:hist}, with the
+happened in the 11 months prior. The distribution of the earthquakes is shown in \cref{fig:hist2}, with the
 average magnitude being \dat{mean_last_month} in the last month and \dat{mean_11_month} in the preceding 11 months.
 The location of all the earthquakes in the past 12 months is shown in \cref{fig:map}.
 We see that both of the earthquakes last month happened in the same location, close to where most of the earthquakes in the
 11 months preceding happened as well.
-
-
-% Estimate Mc using
-%
-% Minimum Magnitude of Completeness in Earthquake Catalogs:
-% Examples from Alaska, the Western United States, and Japan
-% by Stefan Wiemer and Max Wyss (see earthquakes in DOwnloads)
-%
-% https://agupubs.onlinelibrary.wiley.com/doi/full/10.26464/epp2018015?saml_referrer
-%
-% https://agupubs.onlinelibrary.wiley.com/doi/full/10.26464/epp2018015?saml_referrer
-%
-% Need to figure out how to perform the estimation again, because don't get working plots...
-%
-% summary here...
-%
-% https://pubs.geoscienceworld.org/ssa/bssa/article/90/4/859/120531/Minimum-Magnitude-of-Completeness-in-Earthquake
-%
-% Use this ^^ ?
-%
-% Downloads/CORSSA as well...
-%
-% When get back, just try to make the estimate as simple as possible i.e. just use idea of shifting data by Mc and then using exponential MLE or something and use a different metric to measure goodness of fit, for example binned MSE or something, averaged over number of "predictions" made instead of sum over true values...
-
-
-
-
-% TODO plan
-% * create driver script for Q2 on MCMC, and make the plots nice
-% * Write report for it, with conclusion
 
 \bibliographystyle{unsrtnat}
 \bibliography{reports/monthly-summary/references}

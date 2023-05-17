@@ -14,7 +14,7 @@ library(rprojroot)
 #' \deqn{\log N(m) = a-b\cdot m},
 #' where \eqn{a} and \eqn{b} are unknown parameters. The parameters are
 #' used to predict the earthquake frequencies for all the bins above mc.
-#' The cumulative count for these predictions, denotes \eqn{S_i},
+#' The cumulative count for these predictions, denoted \eqn{S_i},
 #' are then compared to the cumulative true counts, \eqn{B_i}, of
 #' \eqn{N(m)} for \eqn{m \geq m_c}, and the sum of the absolute differences
 #' are normalized by the sum of the true counts. This value then becomes
@@ -28,7 +28,7 @@ library(rprojroot)
 #'   09 2000. doi: 10.1785/0119990114.
 #' 
 #'
-#' @param breaks a vector of breaks to use when binning the data. Should be evenly seperated
+#' @param breaks a vector of breaks to use when binning the data. Should be evenly spaced
 #' @param mags a vector of magnitude values
 #' @param mc the candidate mc for which to compute goodness of fit. Should be numerically close to one of the breaks
 #'
@@ -51,7 +51,7 @@ goodness_of_fit <- function(breaks, mags, mc) {
   
   # count the number of observations that fall into each bin
   histogram_obj <- hist(mags, breaks = breaks, plot = FALSE)
-  # only consider data past and including the hypothesized M_c value
+  # only consider data past and including the hypothesized m_c value
   bin_counts <- histogram_obj$counts[mc_break_index:(length(breaks) - 1)]
   
   # Assuming mag ~ Exp(beta) gives log(N(m))=a+b*m, so fit linear model
@@ -81,7 +81,7 @@ goodness_of_fit <- function(breaks, mags, mc) {
   return (list(R_value=R_value, a=a, b=b))
 }
 
-#' Finds the optimal c_c value based on provided magnitude data
+#' Finds the optimal m_c value based on provided magnitude data
 #' and configured parameters
 #' 
 #' Candidate values for the minimum magnitude of completeness, m_c,
@@ -90,7 +90,7 @@ goodness_of_fit <- function(breaks, mags, mc) {
 #' the configured bin width. The goodness of fit for all of these
 #' candidates are then computed using `goodness_of_fit`, and the lowest
 #' m_c value achieving a goodness above the configured `explained_variance_min`
-#' is used. If none such is found, the one giving the highest goodness of fit
+#' is used. If no such fit is found, the one giving the highest goodness of fit
 #' is used instead.
 #'
 #' @param mags a vector of magnitude levels
@@ -98,8 +98,8 @@ goodness_of_fit <- function(breaks, mags, mc) {
 #' @return a list with keys:
 #'         * mcs the candidate mc values considered
 #'         * Rs the goodness of fits for the different candidates
-#'         * as the a parameters in the exponential fit
-#'         * bs the b parameters in the exponential fit
+#'         * as the a parameters in the exponential fits
+#'         * bs the b parameters in the exponential fits
 #'         * mc_hat_index the index into mcs, Rs, as and bs for which the
 #'                        chosen m_c value was selected
 #'         * breaks the bin-breaks used. These should also be used for plotting
@@ -140,7 +140,7 @@ estimate_mc <- function(mags) {
     bs[i] <- res$b
   }
   
-  # pick the first Mc which explains above 90% of the data,
+  # pick the first m_c which explains above 90% of the data,
   # or whatever value is configured
   mc_hat_index <- which(Rs >= config$explained_variance_min)[1]
   if (is.na(mc_hat_index)) {

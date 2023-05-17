@@ -1,14 +1,14 @@
 library(tictoc)
 
-#' Title
+#' Basic MCMC sampler function that can be passed to `simulate_mcmc_sampling`
 #'
-#' @param prev_state 
-#' @param p 
+#' This sampler will return a standard normal sample of length p at each call,
+#' ignoring the provided state
 #'
-#' @return
-#' @export
+#' @param prev_state any object
+#' @param p size of the sample
 #'
-#' @examples
+#' @return list with the state being equal to prev_state and a random sample of length p
 dummy_mcmc_sampler <- function(prev_state, p) {
   # ignore state
   next_state <- prev_state
@@ -59,6 +59,7 @@ simulate_mcmc_sampling <- function(mcmc_sampler, allocation_strategy, m, p, ...)
   
   prev_mcmc_state <- NULL
   
+  # start timer
   tic(quiet = TRUE)
   
   storage <- allocation_strategy$storage_func(m, p)

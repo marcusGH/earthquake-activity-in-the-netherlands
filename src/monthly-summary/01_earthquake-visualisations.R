@@ -21,7 +21,7 @@ source(here(proj_root, "src", "helper-functions", "report-data-utils.R"))
 # read in the newest data as a tibble
 data_filename <- paste0(config$date, config$data_suffix, ".csv")
 # filter out earthquakes with a magnitude below estimated
-# M_c so that we have a complete dataset, and only consider
+# m_c so that we have a complete dataset, and only consider
 # the past 12 months
 earthquake_data <- read_csv(here(proj_root, "data", "raw", data_filename)) %>%
   filter(mag >= as.numeric(read_data_variable("mc"))) %>%
@@ -73,7 +73,7 @@ st_join(nl_geo_data, earthquake_data) %>%
 ggsave(here(proj_root, "outputs", "figures", "earthquake-map.pdf"),
        width=18, height=8.9, units="cm")
 
-# determine how many earthquakes where in the last month compared
+# determine how many earthquakes there were in the last month compared
 # to the 11 preceding months. Sorting by is_last_month makes
 # the second entry be the counts for last month
 group_summary <- earthquake_data %>%

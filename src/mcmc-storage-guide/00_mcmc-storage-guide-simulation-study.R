@@ -10,7 +10,7 @@ library(magrittr)
 proj_root <- find_root(has_file("README.md"))
 config <- yaml.load_file(here(proj_root, "config.yaml"))
 
-# load the helper functions required for estimating M_c
+# load the helper functions required for estimating m_c
 source(here(proj_root, "src", "helper-functions", "mcmc-simulation-utils.R"))
 source(here(proj_root, "src", "helper-functions", "report-data-utils.R"))
 
@@ -19,7 +19,8 @@ max_num_samples <- as.integer(config$max_num_samples)
 # to get an idea of how performance scales, simulate the sampling for
 # logarithmicaly spaced m-values going up to specified number of samples
 ms <- as.integer(10 ^ seq(0, log10(max_num_samples), by = .25))
-# we might get multiple 1s
+# we might get multiple "m=1"s, in which case increment the second one
+# to avoid duplicate m-values
 if (ms[2] == ms[1]) {
   ms[2] <- ms[2] + 1
 }
@@ -27,15 +28,6 @@ if (ms[2] == ms[1]) {
 # in order to get a confidence interval for the values
 num_repeats <- as.integer(config$num_repeated_simulations)
 
-# entry (i, j) gives time for jth m-value using strategy i, where
-# i  |   strategy
-# ---------------
-# 1  | data frame row-wise
-# 2  | data frame column-wise
-# 3  | matrix row-wise
-# 4  | matrix column-wise
-time_elapsed_mean <- matrix(NA, nrow = 4, ncol = length(ms))
-time_elapsed_sd <- matrix(NA, nrow = 4, ncol = length(ms))
 allocation_strategies <- list(
   # data frame row-wise
   list(
@@ -62,6 +54,15 @@ allocation_strategies <- list(
     transform = function(x) data.frame(t(x))
   )
 )
+# entry (i, j) gives execution time for jth m-value using strategy i, where
+# i  |   strategy description
+# ----------------------------
+# 1  | data frame row-wise
+# 2  | data frame column-wise
+# 3  | matrix row-wise
+# 4  | matrix column-wise
+time_elapsed_mean <- matrix(NA, nrow = length(allocation_strategies), ncol = length(ms))
+time_elapsed_sd <- matrix(NA, nrow = length(allocation_strategies), ncol = length(ms))
 
 # using jth m-value
 for (j in 1:length(ms)) {
@@ -72,7 +73,7 @@ for (j in 1:length(ms)) {
   for (i in 1:length(allocation_strategies)) {
     times <- rep(NA, num_repeats)
     for (k in 1:num_repeats) {
-      # we fill the storage row-wise for strategy 1 and 3
+      # perform the simulation
       times[k] <- simulate_mcmc_sampling(
         dummy_mcmc_sampler, allocation_strategies[[i]], ms[j], p)$time_elapsed
     }

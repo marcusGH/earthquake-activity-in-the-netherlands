@@ -48,11 +48,7 @@ ggplot(data.frame(mcs = mc_estimate$mcs, Rs = mc_estimate$Rs), aes(mcs, 100-Rs))
 ggsave(here(proj_root, "outputs", "figures", "goodness-of-fit.pdf"),
        width=9, height=27/5, units="cm")
 
-# TODO: now make the below plot verifying that records appear complete
-# After doing this, start wriiting page one of the report, citing papers etc.
-# and also exporting all the config to file so can be read in by latex, e.g. M_c etc.
-
-# in case the magnitude is equal, accept some noise to avoid numerical errors
+# in case the magnitude is equal to mc, accept some noise to avoid numerical errors
 mags_above_mc <- earthquake_data$mag[which(earthquake_data$mag >= mc_hat - 1E-4)]
 mag_breaks <- mc_estimate$breaks[(mc_estimate$mc_hat_index+1):length(mc_estimate$breaks)]
 
@@ -60,23 +56,15 @@ mag_breaks <- mc_estimate$breaks[(mc_estimate$mc_hat_index+1):length(mc_estimate
 xs <- seq(mc_hat, max(mags_above_mc), by=0.01)
 ys <- exp(a_hat + b_hat * xs)
 
-# TODO: add legends ...
 ggplot(data.frame(mags_above_mc), aes(mags_above_mc)) +
-  # labs(
-  #   title = expression("Earthquake frequency for magnitudes above M"["c"]),
-  # ) +
   xlab("Magnitude") +
   ylab("Frequency") +
   geom_histogram(breaks = mag_breaks, color = NA, fill = "black", alpha = 0.7) +
   scale_x_continuous(breaks = round(seq(min(mag_breaks), max(mag_breaks), by = 0.4), 1)) +
-  # scale_color_manual(name = "group", values = c("black" = "black", "red" = "red"), labels = c("black" = "t1", "red" = "t2")) +
-  # scale_fill_manual(name = "group", values = c("black" = "black", "red" = "red"), labels = c("black" = "t1", "red" = "t2")) +
   geom_line(data = data.frame(xs, ys), aes(xs, ys), color = "red", linewidth = 1) +
   theme_bw() +
   theme(axis.line = element_line(colour = "black"),
-        # panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        # panel.border = element_blank(),
         panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5))
 ggsave(here(proj_root, "outputs", "figures", "earthquake-histogram.pdf"),
