@@ -5,4 +5,4 @@ monthly-report/build/
 *.swp
 Rplots.pdf
 !data/derived/.gitignore
-
+*.zip
